@@ -9,8 +9,10 @@ class Spacehammer < Formula
   depends_on "fennel"
 
   def install
-    hammerspoon_dir = "#{Dir.home}/.hammerspoon"
-    spacehammer_dir = "#{Dir.home}/.spacehammer"
+    # Get REAL home directory (not sandboxed .brew_home)
+    real_home = Etc.getpwuid.dir
+    hammerspoon_dir = "#{real_home}/.hammerspoon"
+    spacehammer_dir = "#{real_home}/.spacehammer"
     timestamp = Time.now.to_i
 
     # 1. Backup ~/.hammerspoon if exists
@@ -55,6 +57,7 @@ class Spacehammer < Formula
   end
 
   def caveats
+    real_home = Etc.getpwuid.dir
     config_note = if ENV["SPACEHAMMER_CONFIG_REPO"]
       "Custom config has been cloned to ~/.spacehammer"
     else
@@ -76,6 +79,7 @@ class Spacehammer < Formula
   end
 
   test do
-    assert_path_exists "#{Dir.home}/.hammerspoon"
+    real_home = Etc.getpwuid.dir
+    assert_path_exists "#{real_home}/.hammerspoon"
   end
 end
