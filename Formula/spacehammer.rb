@@ -10,6 +10,12 @@ class Spacehammer < Formula
   depends_on "fennel"
 
   def install
+    # Install to Cellar (standard formula behavior)
+    prefix.install Dir["*"]
+    prefix.install Dir[".*"].reject { |f| f.end_with?(".", "..") }
+  end
+
+  def post_install
     hammerspoon_dir = "#{Dir.home}/.hammerspoon"
 
     # Warn if ~/.hammerspoon is a git repository
@@ -27,15 +33,14 @@ class Spacehammer < Formula
         File.delete(hammerspoon_dir)
         ohai "Removed existing symlink at ~/.hammerspoon"
       else
-        mv(hammerspoon_dir, backup_dir)
+        system "mv", hammerspoon_dir, backup_dir
         ohai "Backed up ~/.hammerspoon to #{backup_dir}"
       end
     end
 
-    # Install spacehammer to ~/.hammerspoon
-    mkdir_p(hammerspoon_dir)
-    Dir.glob("#{buildpath}/*").each { |file| cp_r(file, hammerspoon_dir) }
-    Dir.glob("#{buildpath}/.*").reject { |f| f.end_with?(".", "..") }.each { |file| cp_r(file, hammerspoon_dir) }
+    # Copy from Cellar to ~/.hammerspoon
+    system "mkdir", "-p", hammerspoon_dir
+    system "cp", "-R", "#{prefix}/.", hammerspoon_dir
 
     # Clone custom config if SPACEHAMMER_CONFIG_REPO environment variable is set
     config_repo = ENV["SPACEHAMMER_CONFIG_REPO"]
