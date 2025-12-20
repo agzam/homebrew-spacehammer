@@ -26,9 +26,14 @@ cask "spacehammer" do
     end
   end
 
-  artifact "spacehammer-#{version}", target: "#{Dir.home}/.hammerspoon"
-
   postflight do
+    # Copy spacehammer to ~/.hammerspoon (not tracked by Homebrew)
+    source = "#{staged_path}/spacehammer-#{version}"
+    target = "#{Dir.home}/.hammerspoon"
+    ohai "Installing Spacehammer to #{target}"
+    system_command "cp", args: ["-R", source, target]
+
+    # Clone config if CONFIG_REPO is set
     config_repo = ENV["CONFIG_REPO"]
     if config_repo
       ohai "Cloning config from #{config_repo}..."
