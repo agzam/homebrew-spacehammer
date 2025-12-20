@@ -31,9 +31,12 @@ cask "spacehammer" do
     system_command "cp", args: ["-R", source, target]
 
     config_repo = ENV["CONFIG_REPO"]
-    if config_repo
+    if config_repo && !config_repo.empty?
       ohai "Cloning config from #{config_repo}..."
-      system_command "git", args: ["clone", config_repo, "#{Dir.home}/.spacehammer"], must_succeed: false
+      result = system_command "git", args: ["clone", config_repo, "#{Dir.home}/.spacehammer"], must_succeed: false
+      unless result.success?
+        raise CaskError, "Failed to clone config repo: #{config_repo}"
+      end
     end
   end
 

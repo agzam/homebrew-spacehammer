@@ -11,7 +11,8 @@ brew install --cask spacehammer
 
 With custom config repo:
 ```bash
-CONFIG_REPO=git@github.com:username/my-config.git brew install --cask spacehammer
+CONFIG_REPO=git@github.com:username/my-config.git \
+brew install --cask spacehammer
 ```
 
 ## Prerequisites
