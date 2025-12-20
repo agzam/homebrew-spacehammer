@@ -24,6 +24,14 @@ cask "spacehammer" do
     EOS
   end
 
+  # Validate config repo if provided
+  if @@config_repo && !@@config_repo.empty?
+    result = system("git ls-remote #{@@config_repo} > /dev/null 2>&1")
+    unless result
+      odie "Cannot access config repo: #{@@config_repo}"
+    end
+  end
+
   depends_on cask: "hammerspoon"
   depends_on formula: "fennel"
 
@@ -35,10 +43,7 @@ cask "spacehammer" do
 
     if @@config_repo && !@@config_repo.empty?
       ohai "Cloning config from #{@@config_repo}..."
-      result = system_command "git", args: ["clone", @@config_repo, "#{Dir.home}/.spacehammer"], must_succeed: false
-      unless result.success?
-        raise CaskError, "Failed to clone config repo: #{@@config_repo}"
-      end
+      system_command "git", args: ["clone", @@config_repo, "#{Dir.home}/.spacehammer"]
     end
   end
 
