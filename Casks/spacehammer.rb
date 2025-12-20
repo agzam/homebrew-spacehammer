@@ -41,6 +41,11 @@ cask "spacehammer" do
     end
   end
 
+  uninstall_postflight do
+    ohai "To complete uninstall, manually remove:"
+    ohai "  rm -rf ~/.hammerspoon ~/.spacehammer"
+  end
+
   caveats <<~EOS
     Spacehammer installed to ~/.hammerspoon
 
