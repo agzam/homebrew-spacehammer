@@ -6,24 +6,24 @@ class Spacehammer < Formula
   sha256 "ccc6d70e296b50a8c8ff461a636eba49d0a1085a58ff4c53c26a8186a548fe27"
   head "https://github.com/agzam/spacehammer.git", branch: "master"
 
-  # Backup ~/.hammerspoon BEFORE dependencies are installed
-  @@hammerspoon_dir = "#{Dir.home}/.hammerspoon"
-  @@spacehammer_dir = "#{Dir.home}/.spacehammer"
-
-  if File.exist?(@@hammerspoon_dir) || File.symlink?(@@hammerspoon_dir)
-    @@backup_dir = "#{@@hammerspoon_dir}.backup.#{Time.now.to_i}"
-    if File.symlink?(@@hammerspoon_dir)
-      File.delete(@@hammerspoon_dir)
-      puts "Removed existing symlink at ~/.hammerspoon"
-    else
-      FileUtils.mv(@@hammerspoon_dir, @@backup_dir)
-      puts "Backed up ~/.hammerspoon to #{@@backup_dir}"
-    end
-  end
-
   depends_on "fennel"
 
   def install
+    hammerspoon_dir = "#{Dir.home}/.hammerspoon"
+    spacehammer_dir = "#{Dir.home}/.spacehammer"
+
+    # Backup ~/.hammerspoon if exists
+    if File.exist?(hammerspoon_dir) || File.symlink?(hammerspoon_dir)
+      backup_dir = "#{hammerspoon_dir}.backup.#{Time.now.to_i}"
+      if File.symlink?(hammerspoon_dir)
+        File.delete(hammerspoon_dir)
+        ohai "Removed existing symlink at ~/.hammerspoon"
+      else
+        FileUtils.mv(hammerspoon_dir, backup_dir)
+        ohai "Backed up ~/.hammerspoon to #{backup_dir}"
+      end
+    end
+
     # Install Hammerspoon if not present
     unless File.exist?("/Applications/Hammerspoon.app")
       system "brew", "install", "--cask", "hammerspoon"
@@ -35,7 +35,8 @@ class Spacehammer < Formula
   end
 
   def post_install
-    hammerspoon_dir = @@hammerspoon_dir
+    hammerspoon_dir = "#{Dir.home}/.hammerspoon"
+    spacehammer_dir = "#{Dir.home}/.spacehammer"
 
     # Copy from Cellar to ~/.hammerspoon
     system "mkdir", "-p", hammerspoon_dir
@@ -44,13 +45,11 @@ class Spacehammer < Formula
     # Clone custom config if SPACEHAMMER_CONFIG_REPO environment variable is set
     config_repo = ENV["SPACEHAMMER_CONFIG_REPO"]
     if config_repo
-      config_dir = @@spacehammer_dir
-
-      if File.exist?(config_dir)
+      if File.exist?(spacehammer_dir)
         opoo "~/.spacehammer already exists, skipping config clone"
       else
         ohai "Cloning custom config from #{config_repo}..."
-        system "git", "clone", config_repo, config_dir
+        system "git", "clone", config_repo, spacehammer_dir
       end
     end
   end
