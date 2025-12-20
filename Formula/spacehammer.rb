@@ -6,8 +6,6 @@ class Spacehammer < Formula
   sha256 "ccc6d70e296b50a8c8ff461a636eba49d0a1085a58ff4c53c26a8186a548fe27"
   head "https://github.com/agzam/spacehammer.git", branch: "master"
 
-  option "with-config", "Clone a custom config repository to ~/.spacehammer"
-
   depends_on cask: "hammerspoon"
   depends_on "fennel"
 
@@ -39,8 +37,8 @@ class Spacehammer < Formula
     Dir.glob("#{buildpath}/*").each { |file| cp_r(file, hammerspoon_dir) }
     Dir.glob("#{buildpath}/.*").reject { |f| f.end_with?(".", "..") }.each { |file| cp_r(file, hammerspoon_dir) }
 
-    # Clone custom config if --with-config option is provided
-    config_repo = ARGV.value("with-config")
+    # Clone custom config if SPACEHAMMER_CONFIG_REPO environment variable is set
+    config_repo = ENV["SPACEHAMMER_CONFIG_REPO"]
     if config_repo
       config_dir = "#{Dir.home}/.spacehammer"
 
@@ -54,7 +52,7 @@ class Spacehammer < Formula
   end
 
   def caveats
-    config_note = if ARGV.value("with-config")
+    config_note = if ENV["SPACEHAMMER_CONFIG_REPO"]
       "Custom config has been cloned to ~/.spacehammer"
     else
       "On first launch, Spacehammer will create ~/.spacehammer/config.fnl"

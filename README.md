@@ -23,8 +23,20 @@ brew install spacehammer --HEAD
 
 **Install with custom config repository:**
 ```bash
-brew install spacehammer --with-config=git@github.com:username/my-spacehammer-config.git
+SPACEHAMMER_CONFIG_REPO=git@github.com:username/my-spacehammer-config.git \
+brew install spacehammer
 ```
+
+## What Gets Installed
+
+- `~/.hammerspoon` - Spacehammer core files
+- `~/.spacehammer` - Your custom configuration (created on first launch, or cloned if `SPACEHAMMER_CONFIG_REPO` is set)
+
+## Usage
+
+After installation:
+1. Launch Hammerspoon (if not already running)
+2. Press `Option+Space` (default LEAD key) to open the modal menu
 
 ## Uninstalling
 
@@ -43,6 +55,7 @@ rm -rf ~/.hammerspoon ~/.spacehammer
 - If you have an existing `~/.hammerspoon` directory, it will be backed up with a timestamp before installation
 - If `~/.hammerspoon` is a git repository, you'll get a 5-second warning to cancel and commit/push changes first
 - Your custom configuration in `~/.spacehammer` is preserved during upgrades
+- To install with your own config repository, set the `SPACEHAMMER_CONFIG_REPO` environment variable during installation
 
 ## More Information
 
