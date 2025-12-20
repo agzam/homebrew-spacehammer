@@ -9,55 +9,54 @@ class Spacehammer < Formula
   depends_on "fennel"
 
   def install
-    # Get REAL home directory (not sandboxed .brew_home)
+    # Just install to Cellar - user directory stuff happens in post_install (unsandboxed)
+    prefix.install Dir["*"]
+    prefix.install Dir[".*"].reject { |f| f.end_with?(".", "..") }
+  end
+
+  def post_install
+    # post_install is NOT sandboxed - we can write to user directories here
     real_home = Etc.getpwuid.dir
     hammerspoon_dir = "#{real_home}/.hammerspoon"
     spacehammer_dir = "#{real_home}/.spacehammer"
     timestamp = Time.now.to_i
 
-    # 1. Backup ~/.hammerspoon if exists
-    if File.exist?(hammerspoon_dir) && !File.symlink?(hammerspoon_dir)
-      backup = "#{hammerspoon_dir}.backup.#{timestamp}"
-      ohai "Backing up ~/.hammerspoon to #{backup}"
-      FileUtils.mv(hammerspoon_dir, backup)
-    elsif File.symlink?(hammerspoon_dir)
-      ohai "Removing existing symlink at ~/.hammerspoon"
-      File.delete(hammerspoon_dir)
-    end
-
-    # 2. Backup ~/.spacehammer if exists AND we're cloning a new config
-    if ENV["SPACEHAMMER_CONFIG_REPO"] && File.exist?(spacehammer_dir)
-      backup = "#{spacehammer_dir}.backup.#{timestamp}"
-      ohai "Backing up ~/.spacehammer to #{backup}"
-      FileUtils.mv(spacehammer_dir, backup)
-    end
-
-    # 3. Install Hammerspoon cask if not present
+    # 1. Install Hammerspoon cask if not present
     unless File.exist?("/Applications/Hammerspoon.app")
       ohai "Installing Hammerspoon..."
       system "brew", "install", "--cask", "hammerspoon"
     end
 
-    # 4. Create ~/.hammerspoon and copy spacehammer files directly
+    # 2. Backup ~/.hammerspoon if exists
+    if File.exist?(hammerspoon_dir)
+      backup = "#{hammerspoon_dir}.backup.#{timestamp}"
+      ohai "Backing up ~/.hammerspoon to #{backup}"
+      system "mv", hammerspoon_dir, backup
+    elsif File.symlink?(hammerspoon_dir)
+      ohai "Removing existing symlink at ~/.hammerspoon"
+      system "rm", hammerspoon_dir
+    end
+
+    # 3. Backup ~/.spacehammer if exists AND we're cloning a new config
+    if ENV["SPACEHAMMER_CONFIG_REPO"] && File.exist?(spacehammer_dir)
+      backup = "#{spacehammer_dir}.backup.#{timestamp}"
+      ohai "Backing up ~/.spacehammer to #{backup}"
+      system "mv", spacehammer_dir, backup
+    end
+
+    # 4. Create ~/.hammerspoon and copy spacehammer files
     ohai "Installing Spacehammer to ~/.hammerspoon"
-    FileUtils.mkdir_p(hammerspoon_dir)
-    
-    # Copy all files from buildpath to ~/.hammerspoon
-    Dir.glob("#{buildpath}/*").each { |f| FileUtils.cp_r(f, hammerspoon_dir) }
-    Dir.glob("#{buildpath}/.*").reject { |f| f.end_with?(".", "..") }.each { |f| FileUtils.cp_r(f, hammerspoon_dir) }
+    system "mkdir", "-p", hammerspoon_dir
+    system "cp", "-R", "#{prefix}/.", hammerspoon_dir
 
     # 5. Clone custom config if SPACEHAMMER_CONFIG_REPO is set
     if ENV["SPACEHAMMER_CONFIG_REPO"]
       ohai "Cloning custom config from #{ENV["SPACEHAMMER_CONFIG_REPO"]}..."
       system "git", "clone", ENV["SPACEHAMMER_CONFIG_REPO"], spacehammer_dir
     end
-
-    # Also install to prefix for Homebrew tracking
-    prefix.install Dir["*"]
   end
 
   def caveats
-    real_home = Etc.getpwuid.dir
     config_note = if ENV["SPACEHAMMER_CONFIG_REPO"]
       "Custom config has been cloned to ~/.spacehammer"
     else
