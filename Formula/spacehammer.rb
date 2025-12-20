@@ -23,21 +23,23 @@ class Spacehammer < Formula
   end
 
   def install
+    # Install to Cellar only - user directory stuff in post_install
+    prefix.install Dir["*"]
+    prefix.install Dir[".*"].reject { |f| f.end_with?(".", "..") }
+  end
+
+  def post_install
+    real_home = Etc.getpwuid.dir
+    hammerspoon_dir = "#{real_home}/.hammerspoon"
+
     # Install Hammerspoon cask if not present
     unless File.exist?("/Applications/Hammerspoon.app")
       system "brew", "install", "--cask", "hammerspoon"
     end
 
-    # Install spacehammer to ~/.hammerspoon
-    real_home = Etc.getpwuid.dir
-    hammerspoon_dir = "#{real_home}/.hammerspoon"
-    
-    mkdir_p hammerspoon_dir
-    cp_r Dir["*"], hammerspoon_dir
-    cp_r Dir[".*"].reject { |f| f.end_with?(".", "..") }, hammerspoon_dir
-
-    # Also install to prefix for Homebrew tracking
-    prefix.install Dir["*"]
+    # Copy spacehammer to ~/.hammerspoon
+    system "mkdir", "-p", hammerspoon_dir
+    system "cp", "-R", "#{prefix}/.", hammerspoon_dir
   end
 
   def caveats
