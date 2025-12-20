@@ -11,47 +11,47 @@ class Spacehammer < Formula
   def install
     hammerspoon_dir = "#{Dir.home}/.hammerspoon"
     spacehammer_dir = "#{Dir.home}/.spacehammer"
+    timestamp = Time.now.to_i
 
-    # Backup ~/.hammerspoon if exists
-    if File.exist?(hammerspoon_dir) || File.symlink?(hammerspoon_dir)
-      backup_dir = "#{hammerspoon_dir}.backup.#{Time.now.to_i}"
-      if File.symlink?(hammerspoon_dir)
-        File.delete(hammerspoon_dir)
-        ohai "Removed existing symlink at ~/.hammerspoon"
-      else
-        FileUtils.mv(hammerspoon_dir, backup_dir)
-        ohai "Backed up ~/.hammerspoon to #{backup_dir}"
-      end
+    # 1. Backup ~/.hammerspoon if exists
+    if File.exist?(hammerspoon_dir) && !File.symlink?(hammerspoon_dir)
+      backup = "#{hammerspoon_dir}.backup.#{timestamp}"
+      ohai "Backing up ~/.hammerspoon to #{backup}"
+      FileUtils.mv(hammerspoon_dir, backup)
+    elsif File.symlink?(hammerspoon_dir)
+      ohai "Removing existing symlink at ~/.hammerspoon"
+      File.delete(hammerspoon_dir)
     end
 
-    # Install Hammerspoon if not present
+    # 2. Backup ~/.spacehammer if exists AND we're cloning a new config
+    if ENV["SPACEHAMMER_CONFIG_REPO"] && File.exist?(spacehammer_dir)
+      backup = "#{spacehammer_dir}.backup.#{timestamp}"
+      ohai "Backing up ~/.spacehammer to #{backup}"
+      FileUtils.mv(spacehammer_dir, backup)
+    end
+
+    # 3. Install Hammerspoon cask if not present
     unless File.exist?("/Applications/Hammerspoon.app")
+      ohai "Installing Hammerspoon..."
       system "brew", "install", "--cask", "hammerspoon"
     end
 
-    # Install to Cellar (standard formula behavior)
-    prefix.install Dir["*"]
-    prefix.install Dir[".*"].reject { |f| f.end_with?(".", "..") }
-  end
+    # 4. Create ~/.hammerspoon and copy spacehammer files directly
+    ohai "Installing Spacehammer to ~/.hammerspoon"
+    FileUtils.mkdir_p(hammerspoon_dir)
+    
+    # Copy all files from buildpath to ~/.hammerspoon
+    Dir.glob("#{buildpath}/*").each { |f| FileUtils.cp_r(f, hammerspoon_dir) }
+    Dir.glob("#{buildpath}/.*").reject { |f| f.end_with?(".", "..") }.each { |f| FileUtils.cp_r(f, hammerspoon_dir) }
 
-  def post_install
-    hammerspoon_dir = "#{Dir.home}/.hammerspoon"
-    spacehammer_dir = "#{Dir.home}/.spacehammer"
-
-    # Copy from Cellar to ~/.hammerspoon
-    system "mkdir", "-p", hammerspoon_dir
-    system "cp", "-R", "#{prefix}/.", hammerspoon_dir
-
-    # Clone custom config if SPACEHAMMER_CONFIG_REPO environment variable is set
-    config_repo = ENV["SPACEHAMMER_CONFIG_REPO"]
-    if config_repo
-      if File.exist?(spacehammer_dir)
-        opoo "~/.spacehammer already exists, skipping config clone"
-      else
-        ohai "Cloning custom config from #{config_repo}..."
-        system "git", "clone", config_repo, spacehammer_dir
-      end
+    # 5. Clone custom config if SPACEHAMMER_CONFIG_REPO is set
+    if ENV["SPACEHAMMER_CONFIG_REPO"]
+      ohai "Cloning custom config from #{ENV["SPACEHAMMER_CONFIG_REPO"]}..."
+      system "git", "clone", ENV["SPACEHAMMER_CONFIG_REPO"], spacehammer_dir
     end
+
+    # Also install to prefix for Homebrew tracking
+    prefix.install Dir["*"]
   end
 
   def caveats
