@@ -23,19 +23,21 @@ class Spacehammer < Formula
     end
 
     # Backup existing ~/.hammerspoon
-    if File.exist?(hammerspoon_dir) && !File.symlink?(hammerspoon_dir)
+    if File.exist?(hammerspoon_dir) || File.symlink?(hammerspoon_dir)
       backup_dir = "#{hammerspoon_dir}.backup.#{Time.now.to_i}"
-      mv(hammerspoon_dir, backup_dir)
-      ohai "Backed up ~/.hammerspoon to #{backup_dir}"
-    elsif File.symlink?(hammerspoon_dir)
-      File.delete(hammerspoon_dir)
-      ohai "Removed existing symlink at ~/.hammerspoon"
+      if File.symlink?(hammerspoon_dir)
+        File.delete(hammerspoon_dir)
+        ohai "Removed existing symlink at ~/.hammerspoon"
+      else
+        mv(hammerspoon_dir, backup_dir)
+        ohai "Backed up ~/.hammerspoon to #{backup_dir}"
+      end
     end
 
     # Install spacehammer to ~/.hammerspoon
     mkdir_p(hammerspoon_dir)
-    cp_r(Dir.glob("#{buildpath}/*"), hammerspoon_dir)
-    cp_r(Dir.glob("#{buildpath}/.*").reject { |f| f.end_with?(".", "..") }, hammerspoon_dir)
+    Dir.glob("#{buildpath}/*").each { |file| cp_r(file, hammerspoon_dir) }
+    Dir.glob("#{buildpath}/.*").reject { |f| f.end_with?(".", "..") }.each { |file| cp_r(file, hammerspoon_dir) }
 
     # Clone custom config if --with-config option is provided
     config_repo = ARGV.value("with-config")
