@@ -38,8 +38,10 @@ cask "spacehammer" do
   end
 
   uninstall_postflight do
-    ohai "To complete uninstall, manually remove:"
-    ohai "  rm -rf ~/.hammerspoon ~/.spacehammer"
+    if File.exist?("#{Dir.home}/.hammerspoon") || File.exist?("#{Dir.home}/.spacehammer")
+      puts "To complete uninstall, manually remove:"
+      puts "  rm -rf ~/.hammerspoon ~/.spacehammer"
+    end
   end
 
   caveats <<~EOS
