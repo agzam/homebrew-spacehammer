@@ -9,6 +9,9 @@ cask "spacehammer" do
   desc "Spacemacs|Doom-inspired modal toolkit for Hammerspoon"
   homepage "https://github.com/agzam/spacehammer"
 
+  # Capture env var at load time (must be HOMEBREW_ prefixed)
+  @@config_repo = ENV["HOMEBREW_SPACEHAMMER_CONFIG"]
+
   # Check BEFORE anything installs
   hammerspoon_dir = "#{Dir.home}/.hammerspoon"
   spacehammer_dir = "#{Dir.home}/.spacehammer"
@@ -30,12 +33,11 @@ cask "spacehammer" do
     ohai "Installing Spacehammer to #{target}"
     system_command "cp", args: ["-R", source, target]
 
-    config_repo = ENV["CONFIG_REPO"]
-    if config_repo && !config_repo.empty?
-      ohai "Cloning config from #{config_repo}..."
-      result = system_command "git", args: ["clone", config_repo, "#{Dir.home}/.spacehammer"], must_succeed: false
+    if @@config_repo && !@@config_repo.empty?
+      ohai "Cloning config from #{@@config_repo}..."
+      result = system_command "git", args: ["clone", @@config_repo, "#{Dir.home}/.spacehammer"], must_succeed: false
       unless result.success?
-        raise CaskError, "Failed to clone config repo: #{config_repo}"
+        raise CaskError, "Failed to clone config repo: #{@@config_repo}"
       end
     end
   end
