@@ -9,31 +9,27 @@ cask "spacehammer" do
   desc "Spacemacs|Doom-inspired modal toolkit for Hammerspoon"
   homepage "https://github.com/agzam/spacehammer"
 
+  # Check BEFORE anything installs
+  hammerspoon_dir = "#{Dir.home}/.hammerspoon"
+  spacehammer_dir = "#{Dir.home}/.spacehammer"
+  if File.exist?(hammerspoon_dir) || File.exist?(spacehammer_dir)
+    odie <<~EOS
+      ~/.hammerspoon or ~/.spacehammer already exists.
+      Please backup and remove first:
+        mv ~/.hammerspoon ~/.hammerspoon.backup
+        mv ~/.spacehammer ~/.spacehammer.backup
+    EOS
+  end
+
   depends_on cask: "hammerspoon"
   depends_on formula: "fennel"
 
-  preflight do
-    hammerspoon_dir = "#{Dir.home}/.hammerspoon"
-    spacehammer_dir = "#{Dir.home}/.spacehammer"
-    
-    if File.exist?(hammerspoon_dir) || File.exist?(spacehammer_dir)
-      odie <<~EOS
-        ~/.hammerspoon or ~/.spacehammer already exists.
-        Please backup and remove first:
-          mv ~/.hammerspoon ~/.hammerspoon.backup
-          mv ~/.spacehammer ~/.spacehammer.backup
-      EOS
-    end
-  end
-
   postflight do
-    # Copy spacehammer to ~/.hammerspoon (not tracked by Homebrew)
     source = "#{staged_path}/spacehammer-#{version}"
     target = "#{Dir.home}/.hammerspoon"
     ohai "Installing Spacehammer to #{target}"
     system_command "cp", args: ["-R", source, target]
 
-    # Clone config if CONFIG_REPO is set
     config_repo = ENV["CONFIG_REPO"]
     if config_repo
       ohai "Cloning config from #{config_repo}..."
