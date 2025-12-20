@@ -21,10 +21,14 @@ class Spacehammer < Formula
     end
   end
 
-  depends_on cask: "hammerspoon"
   depends_on "fennel"
 
   def install
+    # Install Hammerspoon if not present
+    unless File.exist?("/Applications/Hammerspoon.app")
+      system "brew", "install", "--cask", "hammerspoon"
+    end
+
     # Install to Cellar (standard formula behavior)
     prefix.install Dir["*"]
     prefix.install Dir[".*"].reject { |f| f.end_with?(".", "..") }
