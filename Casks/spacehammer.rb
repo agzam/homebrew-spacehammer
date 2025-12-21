@@ -10,7 +10,7 @@ cask "spacehammer" do
   homepage "https://github.com/agzam/spacehammer"
 
   # Capture env var at load time (must be HOMEBREW_ prefixed)
-  @@config_repo = ENV["HOMEBREW_SPACEHAMMER_CONFIG"]
+  @@config_repo = ENV.fetch("HOMEBREW_SPACEHAMMER_CONFIG", nil)
 
   depends_on cask: "hammerspoon"
   depends_on formula: "fennel"
@@ -29,11 +29,9 @@ cask "spacehammer" do
     end
 
     # Validate config repo if provided
-    if @@config_repo && !@@config_repo.empty?
+    if @@config_repo.present?
       result = system("git ls-remote #{@@config_repo} > /dev/null 2>&1")
-      unless result
-        odie "Cannot access config repo: #{@@config_repo}"
-      end
+      odie "Cannot access config repo: #{@@config_repo}" unless result
     end
   end
 
@@ -43,7 +41,7 @@ cask "spacehammer" do
     ohai "Installing Spacehammer to #{target}"
     system_command "cp", args: ["-R", source, target]
 
-    if @@config_repo && !@@config_repo.empty?
+    if @@config_repo.present?
       ohai "Cloning config from #{@@config_repo}..."
       system_command "git", args: ["clone", @@config_repo, "#{Dir.home}/.spacehammer"]
     end
@@ -57,7 +55,10 @@ cask "spacehammer" do
   end
 
   caveats <<~EOS
-    Spacehammer installed to ~/.hammerspoon
+    Spacehammer will be installed to ~/.hammerspoon
+
+    To use a custom config, set before installing:
+      export HOMEBREW_SPACEHAMMER_CONFIG=https://github.com/username/config-repo
 
     On uninstall, manually remove:
       rm -rf ~/.hammerspoon ~/.spacehammer
