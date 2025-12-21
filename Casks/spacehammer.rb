@@ -12,28 +12,30 @@ cask "spacehammer" do
   # Capture env var at load time (must be HOMEBREW_ prefixed)
   @@config_repo = ENV["HOMEBREW_SPACEHAMMER_CONFIG"]
 
-  # Check BEFORE anything installs
-  hammerspoon_dir = "#{Dir.home}/.hammerspoon"
-  spacehammer_dir = "#{Dir.home}/.spacehammer"
-  if File.exist?(hammerspoon_dir) || File.exist?(spacehammer_dir)
-    odie <<~EOS
-      ~/.hammerspoon or ~/.spacehammer already exists.
-      Please backup and remove first:
-        mv ~/.hammerspoon ~/.hammerspoon.backup
-        mv ~/.spacehammer ~/.spacehammer.backup
-    EOS
-  end
-
-  # Validate config repo if provided
-  if @@config_repo && !@@config_repo.empty?
-    result = system("git ls-remote #{@@config_repo} > /dev/null 2>&1")
-    unless result
-      odie "Cannot access config repo: #{@@config_repo}"
-    end
-  end
-
   depends_on cask: "hammerspoon"
   depends_on formula: "fennel"
+
+  preflight do
+    # Check BEFORE anything installs
+    hammerspoon_dir = "#{Dir.home}/.hammerspoon"
+    spacehammer_dir = "#{Dir.home}/.spacehammer"
+    if File.exist?(hammerspoon_dir) || File.exist?(spacehammer_dir)
+      odie <<~EOS
+        ~/.hammerspoon or ~/.spacehammer already exists.
+        Please backup and remove first:
+          mv ~/.hammerspoon ~/.hammerspoon.backup
+          mv ~/.spacehammer ~/.spacehammer.backup
+      EOS
+    end
+
+    # Validate config repo if provided
+    if @@config_repo && !@@config_repo.empty?
+      result = system("git ls-remote #{@@config_repo} > /dev/null 2>&1")
+      unless result
+        odie "Cannot access config repo: #{@@config_repo}"
+      end
+    end
+  end
 
   postflight do
     source = "#{staged_path}/spacehammer-#{version}"
