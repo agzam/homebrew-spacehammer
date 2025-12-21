@@ -16,18 +16,6 @@ cask "spacehammer" do
   depends_on formula: "fennel"
 
   preflight do
-    # Check BEFORE anything installs
-    hammerspoon_dir = "#{Dir.home}/.hammerspoon"
-    spacehammer_dir = "#{Dir.home}/.spacehammer"
-    if File.exist?(hammerspoon_dir) || File.exist?(spacehammer_dir)
-      odie <<~EOS
-        ~/.hammerspoon or ~/.spacehammer already exists.
-        Please backup and remove first:
-          mv ~/.hammerspoon ~/.hammerspoon.backup
-          mv ~/.spacehammer ~/.spacehammer.backup
-      EOS
-    end
-
     # Validate config repo if provided
     if @@config_repo.present?
       result = system("git ls-remote #{@@config_repo} > /dev/null 2>&1")
@@ -36,14 +24,27 @@ cask "spacehammer" do
   end
 
   postflight do
-    source = "#{staged_path}/spacehammer-#{version}"
-    target = "#{Dir.home}/.hammerspoon"
-    ohai "Installing Spacehammer to #{target}"
-    system_command "cp", args: ["-R", source, target]
+    hammerspoon_dir = "#{Dir.home}/.hammerspoon"
+    spacehammer_dir = "#{Dir.home}/.spacehammer"
 
+    # Protect existing user data - never overwrite
+    if File.exist?(hammerspoon_dir)
+      ohai "#{hammerspoon_dir} already exists, skipping to preserve your config"
+      ohai "To update spacehammer: cd ~/.hammerspoon && git pull origin main"
+    else
+      source = "#{staged_path}/spacehammer-#{version}"
+      ohai "Installing Spacehammer to #{hammerspoon_dir}"
+      system_command "cp", args: ["-R", source, hammerspoon_dir]
+    end
+
+    # Clone config repo only if dir doesn't exist
     if @@config_repo.present?
-      ohai "Cloning config from #{@@config_repo}..."
-      system_command "git", args: ["clone", @@config_repo, "#{Dir.home}/.spacehammer"]
+      if File.exist?(spacehammer_dir)
+        ohai "#{spacehammer_dir} already exists, skipping config clone"
+      else
+        ohai "Cloning config from #{@@config_repo}..."
+        system_command "git", args: ["clone", @@config_repo, spacehammer_dir]
+      end
     end
   end
 
@@ -56,6 +57,10 @@ cask "spacehammer" do
 
   caveats <<~EOS
     Spacehammer will be installed to ~/.hammerspoon
+
+    Existing ~/.hammerspoon and ~/.spacehammer directories are never
+    overwritten to protect your config. To update spacehammer code:
+      cd ~/.hammerspoon && git pull origin main
 
     To use a custom config, set before installing:
       export HOMEBREW_SPACEHAMMER_CONFIG=https://github.com/username/config-repo
