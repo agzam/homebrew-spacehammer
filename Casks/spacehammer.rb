@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 cask "spacehammer" do
-  version "1.6.2"
-  sha256 "79b5227c7211c55e76d8bdca8ecf0015aac0f681747231dafd483d00051d2aac"
+  version "1.6.3"
+  sha256 "335c88e1b53667e165cda6bf82d53bb84f77e8aa537c6e393282000bb777d6ac"
 
   url "https://github.com/agzam/spacehammer/archive/refs/tags/#{version}.tar.gz"
   name "Spacehammer"
